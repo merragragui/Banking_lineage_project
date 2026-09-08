@@ -1,0 +1,74 @@
+version: '3.8'
+
+services:
+  # Base de données PostgreSQL pour l'authentification et l'historique des conversations
+  postgres:
+    image: postgres:15-alpine
+    container_name: atlas_postgres
+    restart: always
+    environment:
+      POSTGRES_DB: atlas_lineage_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Base de données vectorielle Qdrant pour les embeddings de métadonnées
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: atlas_qdrant
+    restart: always
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+
+  # Backend FastAPI
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: atlas_backend
+    restart: always
+    environment:
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_DB=atlas_lineage_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgrespassword
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+      - ATLAS_HOST=http://host.docker.internal:21000
+      - MISTRAL_API_KEY=${MISTRAL_API_KEY}
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      qdrant:
+        condition: service_started
+
+  # Frontend React (Nginx Web Server)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: atlas_frontend
+    restart: always
+    ports:
+      - "80:80"
+      - "3000:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  qdrant_storage:

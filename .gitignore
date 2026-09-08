@@ -1,0 +1,8 @@
+__pycache__/ 
+.env 
+node_modules/ 
+venv/ 
+*.db
+atlas_documents.json 
+atlas_embeddings.json 
+"Nouveau dossier/"
