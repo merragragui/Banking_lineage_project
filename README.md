@@ -110,5 +110,5 @@ npm run dev
 ## Contact
 
 - Email : merragragui@gmail.com
-- LinkedIn : à compléter
+- LinkedIn : https://www.linkedin.com/in/meriam-erragragui-23b02929a/
 - GitHub : https://github.com/merragragui
